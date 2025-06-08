@@ -1,14 +1,17 @@
-const authRoutes = require("./auth");
 const express = require("express");
+const bodyParser = require("body-parser");
+const authRoutes = require("./auth"); // ← wichtig!
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get("/callback", (req, res) => {
-  const code = req.query.code || "Kein Code übergeben";
-  res.send(`<h2>Authorization Code erhalten:</h2><p><strong>${code}</strong></p>`);
+app.use(bodyParser.json());
+app.use("/", authRoutes); // ← wichtig!
+
+app.get("/", (req, res) => {
+  res.send("✅ Proxy-Server läuft");
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Test-Server läuft auf Port ${PORT}`);
+  console.log(`🚀 Proxy-Server läuft auf Port ${PORT}`);
 });
-app.use("/", authRoutes);
