@@ -11,3 +11,4 @@ app.get("/callback", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Test-Server läuft auf Port ${PORT}`);
 });
+app.use("/", authRoutes);
