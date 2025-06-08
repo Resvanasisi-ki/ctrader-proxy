@@ -1,55 +1,37 @@
 const express = require("express");
 const axios = require("axios");
-const open = require("open");
+const router = express.Router();
 
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Spotware credentials
-const CLIENT_ID = "DEINE_CLIENT_ID_HIER";
-const CLIENT_SECRET = "DEIN_CLIENT_SECRET_HIER";
+const CLIENT_ID = "15441"; // oder dein tatsächlicher Client-ID
+const CLIENT_SECRET = "tXqSrzpEXskjGFtmVhHBzJ7vHnINnmS1fQcwDBL1PLPzwj7fQ7"; // ersetzt durch dein echtes secret
 const REDIRECT_URI = "https://ctrader-proxy.onrender.com/callback";
 
-app.get("/auth", (req, res) => {
-  const authUrl = `https://connect.spotware.com/apps/auth?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=trading`;
-  res.redirect(authUrl);
-});
-
-app.get("/callback", async (req, res) => {
+router.get("/callback", async (req, res) => {
   const code = req.query.code;
-
-  if (!code) return res.send("❌ Kein Code vorhanden.");
+  if (!code) return res.status(400).send("Code fehlt");
 
   try {
-    const tokenResponse = await axios.post("https://connect.spotware.com/apps/token", null, {
+    const response = await axios.post("https://connect.spotware.com/api/token", null, {
       params: {
         grant_type: "authorization_code",
         code,
-        redirect_uri: REDIRECT_URI,
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
       },
     });
 
-    const { access_token } = tokenResponse.data;
-
-    // Hole die Accounts
-    const accounts = await axios.get("https://api.spotware.com/connect/tradingaccounts", {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-
-    const account = accounts.data[0];
-
+    const { access_token, refresh_token, expires_in } = response.data;
     res.send(`
-      ✅ <b>Access Token:</b> ${access_token}<br>
-      🆔 <b>Account ID:</b> ${account.ctidTraderAccountId}
+      <h2>✅ Zugriffstoken erhalten</h2>
+      <p><strong>Access Token:</strong> ${access_token}</p>
+      <p><strong>Refresh Token:</strong> ${refresh_token}</p>
+      <p><strong>Gültig (Sekunden):</strong> ${expires_in}</p>
     `);
-  } catch (error) {
-    res.send("❌ Fehler beim Token-Tausch: " + error.message);
+  } catch (err) {
+    console.error("❌ Fehler beim Token-Abruf:", err.response?.data || err.message);
+    res.status(500).send("Token konnte nicht abgerufen werden");
   }
 });
 
-app.listen(port, () => {
-  console.log(`OAuth App läuft auf Port ${port}`);
-  open(`http://localhost:${port}/auth`);
-});
+module.exports = router;
