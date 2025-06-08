@@ -67,3 +67,12 @@ app.post("/trade", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Proxy-Server läuft auf Port ${PORT}`);
 });
+// Callback-Route für Spotware Login
+app.get('/callback', (req, res) => {
+  const code = req.query.code;
+  if (!code) {
+    return res.status(400).send("No code provided");
+  }
+  res.send(`<h2>Authorization Code erhalten:</h2><p style="font-size:18px;"><strong>${code}</strong></p>`);
+});
+
